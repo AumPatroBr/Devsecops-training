@@ -7,10 +7,42 @@ pipeline {
     // OR use GitHub webhook instead (recommended)
     }
     environment {
-        DOCKERHUB_USER = 'aum'
+        DOCKERHUB_USER = 'bar3met4l'
         IMAGE_NAME = 'jenkins-docker-lab'
+        SONARQUBE = 'SonarCloud'
+        SONAR_TOKEN = credentials('aum-sq')
     }
     stages {
+          stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+                stage('SonarQube Analysis') {
+ 
+            steps {
+ 
+                withSonarQubeEnv('SonarCloud') {
+ 
+                    sh '''
+ 
+                        # Ensure we're in the root where sonar-project.properties exists
+ 
+                        cd ${WORKSPACE}
+ 
+                        sonar-scanner \
+ 
+                          -Dsonar.projectBaseDir=python-app \
+ 
+                          -Dsonar.login=$SONAR_TOKEN
+ 
+                    '''
+ 
+                }
+ 
+            }
+ 
+        }
         stage('Clean up image and container') {
             steps {
                 script {
@@ -42,6 +74,7 @@ pipeline {
                 archiveArtifacts artifacts: 'trivy-reports/report.txt', fingerprint: true
             }
         }
+    }
     }
     post {
         success {
